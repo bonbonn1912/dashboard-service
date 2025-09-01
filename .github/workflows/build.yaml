@@ -1,0 +1,41 @@
+name: Build & Publish Spring Boot App (Gradle)
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      # 1. Build inkl. Tests (Tests nicht überspringen!)
+      - name: Build with Gradle (incl. tests)
+        run: ./gradlew clean build
+
+      # 2. Coverage Report erzeugen
+      - name: Generate JaCoCo coverage report
+        run: ./gradlew jacocoTestReport
+
+      # 3. Coverage Report als Artefakt hochladen (optional)
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-report
+          path: build/reports/jacoco/test/html
+
+      # 4. Publish to GitHub Packages
+      - name: Publish to GitHub Packages
+        run: ./gradlew publish
+        env:
+          GITHUB_TOKEN: ${{ secrets.PUBLISH_TOKEN }}
+          GITHUB_ACTOR: ${{ github.actor }}

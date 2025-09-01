@@ -1,0 +1,129 @@
+openapi: 3.0.3
+info:
+  title: Regulator & ElectricityMeter API
+  version: 1.0.0
+
+servers:
+  - url: /api
+
+tags:
+  - name: TuyaMeasurements
+
+paths:
+  /tuya/measurements/{deviceName}:
+    get:
+      tags:
+        - TuyaMeasurements
+      summary: Get Tuya measurements for a specific device
+      operationId: getTuyaMeasurementsByDevice
+      security:
+        - basicAuth: []
+      parameters:
+        - name: deviceName
+          in: path
+          required: true
+          description: The name of the device
+          schema:
+            type: string
+        - name: limit
+          in: query
+          required: false
+          description: Maximum number of measurements to return
+          schema:
+            type: integer
+            minimum: 1
+      responses:
+        '200':
+          description: Successful response with measurements
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TuyaMeasurementResponse'
+
+  /tuya/measurements:
+    post:
+      tags:
+        - TuyaMeasurements
+      summary: Takes Tuya measurements and saves them
+      operationId: addTuyaMeasurement
+      security:
+        - basicAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TuyaMeasurementRequest'
+      responses:
+        '201':
+          description: success
+
+components:
+  schemas:
+    TuyaMeasurementRequest:
+      type: object
+      properties:
+        sensorData:
+          type: array
+          items:
+            $ref: '#/components/schemas/SensorDataEntry'
+      required:
+        - sensorData
+
+    TuyaMeasurementResponse:
+      type: object
+      properties:
+        deviceName:
+          $ref: '#/components/schemas/DeviceName'
+        deviceType:
+          $ref: '#/components/schemas/DeviceType'
+        sensorData:
+          type: array
+          items:
+            $ref: '#/components/schemas/SensorDataEntry'
+      required:
+        - sensorData
+
+    SensorDataEntry:
+      type: object
+      properties:
+        device:
+          $ref: '#/components/schemas/DeviceName'
+        type:
+          $ref: '#/components/schemas/DeviceType'
+        T1:
+          $ref: '#/components/schemas/Value'
+        T2:
+          $ref: '#/components/schemas/Value'
+        T3:
+          $ref: '#/components/schemas/Value'
+        value:
+          $ref: '#/components/schemas/Value'
+        lastUpdate:
+          $ref: '#/components/schemas/Timestamp'
+      required:
+        - device
+        - type
+        - lastUpdate
+
+    DeviceName:
+      type: string
+      example: "regulatorLeda"
+
+    DeviceType:
+      type: string
+      enum: [REGULATOR, ELECTRICITY_METER]
+      example: "REGULATOR"
+
+    Timestamp:
+      type: string
+      format: date-time
+      example: "2025-08-31T15:42:07.318636Z"
+    Value:
+      type: integer
+      example: 12345
+
+  securitySchemes:
+    basicAuth:
+      type: http
+      scheme: basic

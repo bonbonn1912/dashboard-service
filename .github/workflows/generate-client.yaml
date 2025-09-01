@@ -1,0 +1,44 @@
+name: Generate & Publish API Client
+
+on:
+  workflow_dispatch:
+
+jobs:
+  generate-client:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Checkout api-clients Repo (open-api-code-gen)
+      - name: Checkout api-clients repo
+        uses: actions/checkout@v3
+        with:
+          repository: bonbonn1912/open-api-code-gen
+          token: ${{ secrets.PUBLISH_TOKEN }} # PAT nötig, wenn Repo privat ist
+          path: api-clients
+
+      # 2. Checkout aktuelles Service-Repo (das Repo, in dem dieser Workflow läuft)
+      - name: Checkout current service repo
+        uses: actions/checkout@v3
+        with:
+          path: dashboard-service
+
+      # 3. JDK einrichten
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: "17"
+          distribution: "temurin"
+
+      - name: Generate & Publish Client
+        run: |
+          cd api-clients
+          echo "📂 Inhalt von api-clients/:"
+          ls -l
+          echo "📂 Inhalt von ../dashboard-service/src/main/resources/static/:"
+          ls -l ../dashboard-service/src/main/resources/static/
+          ./gradlew publish \
+            -PclientName=dashboard-service \
+            -PinputSpec=../dashboard-service/src/main/resources/static/openapi.yaml
+        env:
+          GITHUB_TOKEN: ${{ secrets.PUBLISH_TOKEN }}
+          GITHUB_ACTOR: ${{ github.actor }}
